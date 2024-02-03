@@ -16,20 +16,14 @@ class App extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const HomePage(title: 'Signals: Use of effect'),
+      home: HomePage(title: 'Signals: Use of effect'),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
+class HomePage extends StatelessWidget {
+  HomePage({super.key, required this.title});
   final String title;
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
   final _counter = signal(0);
 
   void _incrementCounter() {
@@ -38,34 +32,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<int> list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-  // To toggle Play Stop buttons
-  bool isEffect = true;
 
   // To display the sorted list
   final myListSignal = listSignal(<int>[]);
 
-  // To hold the pointer to the stop signal for the effect
-  void Function() disposeEffect = effect(() {});
+  void showSnackbar({required BuildContext context, required String message}) {
+    // Remove any existing snackbar
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
+    // Show the new snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     debugPrint('======> HomePage build <=======');
+    // To hold the pointer to the stop signal for the effect
+    void Function() disposeEffect = effect(() {});
 
     final isCounterEven = computed(() => _counter.value.isEven);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text(title),
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               const Text(
-                'Showing the use of effect to display a sorted list and how we can start and stop the effect function. Notice that this HomePage widget is a StatefulWidget and therefore we can use setState().\n\nAlso watch the times that the build function of this HomePage is called in the debug console. You will see that the only builds are triggered because of the setState() calls when flipping the run and stop buttons.',
+                'Showing the use of effect to display a sorted list and how we can start and stop the effect function.\n\nWatch the times that the build function of this HomePage is called in the debug console.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32.0),
@@ -89,7 +92,8 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(
                             color:
                                 isCounterEven.value ? Colors.blue : Colors.red,
-                            fontSize: 25))
+                            fontSize: 25)),
+                    const SizedBox(height: 32.0),
                   ],
                 );
               }),
@@ -97,89 +101,62 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Increment
-          FloatingActionButton(
-            onPressed: _incrementCounter,
-            tooltip: 'Increment Counter and Sort',
-            child: const Icon(Icons.add),
-          ),
-          const SizedBox(width: 32.0),
-          // Start effect
-          Visibility(
-            visible: isEffect,
-            child: FloatingActionButton(
-              // backgroundColor: isEffect ? Colors.grey : Colors.blue,
-              onPressed: () {
-                // Warning: With effects if you call them twice while they are running you will
-                // get a recursion error. Recursion errors are very common while developing reactive
-                // applications. Our effect is store in the disposeEffect pointer so that we can cancel
-                // it, if we call it again we can get into recursion issues. This is why I first clear it
-                // and then create it:
-
-                debugPrint('=======> Start Effect Clicked <=========');
-                setState(() {
-                  isEffect = !isEffect;
-                });
-                disposeEffect = effect(() {
-                  myListSignal.value =
-                      (_counter.value.isEven ? [...list] : [...list].reversed)
-                          .toList();
-                  // Every time intListSignal changes, this SnackBar will show
-                  if (context.mounted) {
-                    // Remove any existing snackbar
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                    // Show SnackBar
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        // peek() allows us to access the value of the signal without triggering
-                        // reactive updates of dependencies
-                        content: Text(
-                          'Effect: ${myListSignal.peek()} ',
-                        ),
-                        duration: const Duration(milliseconds: 100),
-                      ),
-                    );
-                  }
-                });
-              },
-              tooltip: 'Start Effect',
-              child: const Icon(Icons.play_arrow),
+      floatingActionButton:
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        // Increment
+        FloatingActionButton(
+          onPressed: _incrementCounter,
+          tooltip: 'Increment Counter and Sort',
+          child: const Icon(Icons.add),
+        ),
+        const SizedBox(width: 64.0),
+        // Start effect
+        Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue, width: 2),
+              borderRadius: BorderRadius.circular(10),
             ),
-          ),
-          const SizedBox(width: 32.0),
-          // Stop effect
-          Visibility(
-            visible: !isEffect,
-            child: FloatingActionButton(
-              // backgroundColor: isEffect ? Colors.blue : Colors.grey,
-              onPressed: () {
-                debugPrint('=======> Stop Effect Clicked <=========');
-                myListSignal.value = [];
-                setState(() {
-                  isEffect = !isEffect;
-                });
-                disposeEffect();
-                // Cancel previous if any
-                ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                // Show message indicating cancelled
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Effect Cancelled',
-                    ),
-                      duration: Duration(milliseconds: 500),
-                  ),
-                );
-              },
-              tooltip: 'Stop Effect',
-              child: const Icon(Icons.stop),
-            ),
-          ),
-        ],
-      ),
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Effect'),
+                Row(
+                  children: [
+                    FloatingActionButton(
+                        // backgroundColor: isEffect ? Colors.grey : Colors.blue,
+                        onPressed: () {
+                          debugPrint(
+                              '=======> Start Effect Clicked <=========');
+                          disposeEffect = effect(() {
+                            myListSignal.value = (_counter.value.isEven
+                                    ? [...list]
+                                    : [...list].reversed)
+                                .toList();
+                          });
+                          showSnackbar(
+                              context: context, message: 'Effect is on');
+                        },
+                        tooltip: 'Start Effect',
+                        child: const Text('Start')),
+                    const SizedBox(width: 32.0),
+                    // Stop effect
+                    FloatingActionButton(
+                        // backgroundColor: isEffect ? Colors.blue : Colors.grey,
+                        onPressed: () {
+                          debugPrint('=======> Stop Effect Clicked <=========');
+                          myListSignal.value = [];
+                          disposeEffect();
+                          showSnackbar(
+                              context: context, message: 'Effect is off');
+                        },
+                        tooltip: 'Stop Effect',
+                        child: const Text('Stop')),
+                  ],
+                ),
+              ],
+            ))
+      ]),
     );
   }
 }
