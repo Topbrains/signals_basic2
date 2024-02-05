@@ -1,4 +1,4 @@
-# playground
+# Unleashing the Power of Effect(). Signals Part 2
 
 In this app we have a list of integers and we display the list in ascending or descending order depending on if the number of times you have clicked the + button.
 

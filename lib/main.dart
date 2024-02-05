@@ -12,30 +12,27 @@ class App extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Signals Effect',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: HomePage(title: 'Signals: Use of effect'),
+      home: HomePage(pageTitle: 'Signals: Using effect()'),
     );
   }
 }
 
 class HomePage extends StatelessWidget {
-  HomePage({super.key, required this.title});
-  final String title;
+  HomePage({super.key, required this.pageTitle});
+  final String pageTitle;
   final _counter = signal(0);
 
+  // Schau, Mutter, nicht ein setState(() {});
   void _incrementCounter() {
-    // Schau, Mutter, nicht ein setState(() {});
     _counter.value++;
   }
 
-  final List<int> list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  final List<int> list = [0, 1, 2, 3, 4, 5];
 
-  // To display the sorted list
+  // To display the sorted list. Need to make it a signal because we want to watch it.
   final myListSignal = listSignal(<int>[]);
 
+  // Helper function
   void showSnackbar({required BuildContext context, required String message}) {
     // Remove any existing snackbar
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -59,7 +56,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
+        title: Text(pageTitle),
       ),
       body: Center(
         child: Padding(
